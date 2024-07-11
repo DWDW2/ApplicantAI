@@ -22,7 +22,7 @@ export class GoogleApiService {
 
         return auth
     }
-
+    
     async getGoogleSheetsData(sheetId: string, sheetName: string, ratio: string) {
         const auth = await this.authGoogleSheets()
         const googleSheetId = sheetId;
@@ -61,7 +61,8 @@ export class GoogleApiService {
             const input = valuesFromSheet.slice(1);
 
             const transformedData = transformArrayToObjects(input, fields);
-            this.changeGlobalPrompt(transformedData)
+
+            globalThis.__GLOBAL_VAR__.handleDataArray(transformedData)
             return transformedData;
         }
         catch(err) {
@@ -69,21 +70,26 @@ export class GoogleApiService {
         }
     }
 
-    async appendDataToGoogleSheet(data: any[], sheetId: string, sheetName: string) {
-        const auth = await this.authGoogleSheets();
-        const sheetInstance = await google.sheets({ version: 'v4', auth: auth });
+    // async appendDataToGoogleSheet(data: any[], sheetId: string, sheetName: string, ratio: string) {
+    //     const auth = await this.authGoogleSheets();
+    //     const sheetInstance = await google.sheets({ version: 'v4', auth: auth });
     
-        try {
-          await sheetInstance.spreadsheets.values.append({
-            auth: auth,
-            spreadsheetId: sheetId,
-            range: `${sheetName}!A:K`,
-            valueInputOption: 'RAW',
-          });
-        } catch (err) {
-          console.log('appendDataToGoogleSheet func() error', err);
-        }
-    }
+    //     try {
+    //       // Extract the column letter from the ratio
+    //       const columnLetter = ratio.match(/([A-Z]+)\d+/)[1];
+    //       const appendRange = `${sheetName}!${columnLetter}:${columnLetter}`; // Append to the extracted column
+
+    //       await sheetInstance.spreadsheets.values.append({
+    //         auth: auth,
+    //         spreadsheetId: sheetId,
+    //         range: appendRange,
+    //         valueInputOption: 'RAW',
+    //         values: [[aiResponses]], // Add the AI responses as a new row
+    //       });
+    //     } catch (err) {
+    //       console.log('appendDataToGoogleSheet func() error', err);
+    //     }
+    // }
 
     async checkAiGoogleSheets (link: string, page: string, ratio:string) {
         const data = await this.getGoogleSheetsData(link, page, ratio)
@@ -94,7 +100,6 @@ export class GoogleApiService {
             contents: [{ role: "user", parts }],
             generationConfig: generationConfig,
           });
-
           return result;
           
     }
@@ -105,13 +110,4 @@ export class GoogleApiService {
       }
       return '';
     }
-    
-    async changeGlobalPrompt (dataArray: ResultObject[], prompt?: string) {
-      console.log(globalThis.__GLOBAL_VAR__.Prompt)
-      globalThis.__GLOBAL_VAR__.handleDataArray(dataArray, prompt)
-      console.log(globalThis.__GLOBAL_VAR__.Prompt)
-      return 'done'
-    }
-
-    
 }

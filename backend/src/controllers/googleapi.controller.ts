@@ -35,15 +35,6 @@ export default class GoogleSheetsController {
     }
   }
 
-  async appendDataToGoogleSheet ( req: Request, res: Response) {
-    try{
-      await this.googleApiService.appendDataToGoogleSheet(req.body,'1UnpnbrYFZq-0HRd5ruhZOuWXrWQ6kByVV5qK83HprRQ', 'Hackathon nf2024 incubator2' )
-      res.status(200).json({message: 'Data appended successfully'})
-    }catch(err){
-      res.status(500).json({message: err})
-    }
-  }
-
   async chechWithAiGoogleSheets (req: Request, res: Response) {
     try{
       const link = await this.googleApiService.extractSpreadsheetId(req.body.link)
@@ -56,12 +47,6 @@ export default class GoogleSheetsController {
     }catch(err){
       res.status(500).json({message: err})
     }
-  }
-
-
-  async changePrompt(req: Request, res: Response){
-    const result = await this.googleApiService.changeGlobalPrompt(req.body.dataArray ,req.body.prompt)
-    res.status(200).json({message: result})
   }
 }
 
