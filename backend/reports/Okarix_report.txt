@@ -1,0 +1,525 @@
+Report Summary:
+
+Document from public/index.html:
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
+    />
+    <title>Employees app</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
+
+
+Document from src/index.css:
+body {
+    margin: 50px 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+        monospace;
+}
+
+Document from src/index.js:
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from './components/app/app';
+
+
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(
+    <React.StrictMode>
+        <App />
+    </React.StrictMode>
+);
+
+Document from src/components/app-filter/app-filter.css:
+.btn-group {
+    margin-top: 20px;
+}
+
+Document from src/components/app-filter/app-filter.js:
+import './app-filter.css'
+
+const AppFilter = (props) => {
+    const buttonsData = [
+        { name: 'all', label: 'Все сотрудники' },
+        { name: 'rise', label: 'На повышение' },
+        { name: 'salaryMore1000', label: 'З/П больше 1000$' }
+    ]
+
+    const buttons = buttonsData.map(({ name, label }) => {
+        const active = props.filter === name;
+        const clazz = active ? 'btn-light' : 'btn-outline-light';
+        return (
+            <button
+                className={`btn ${clazz}`}
+                type="button"
+                key={name}
+                onClick={() => props.onFilterSelect(name)}>
+                {label}
+            </button>
+        );
+    })
+
+    return (
+        <div className="btn-group">
+            {buttons}
+        </div>
+    )
+}
+
+export default AppFilter;
+
+Document from src/components/app-info/app-info.css:
+.app-info {
+    padding: 25px;
+    background-color: #3d5a80;
+    border-radius: 4px;
+    box-shadow: 15px 15px 30px rgba(0, 0, 0, .15);
+    color: #fff;
+}
+
+Document from src/components/app-info/app-info.js:
+import './app-info.css';
+
+const AppInfo = ({ increased, employees }) => {
+    return (
+        <div className="app-info">
+            <h1>Учет сотрудников в компании Bekonomix</h1>
+            <h2>Общее число сотрудников: {employees}  </h2>
+            <h2>Премию получат: {increased}</h2>
+        </div>
+    )
+}
+
+export default AppInfo;
+
+Document from src/components/app/app.css:
+.app {
+    margin: 0 auto;
+    max-width: 1000px;
+}
+
+Document from src/components/app/app.js:
+import { Component } from 'react';
+import AppInfo from '../app-info/app-info';
+import SearchPanel from '../search-panel/search-panel';
+import AppFilter from '../app-filter/app-filter';
+import EmployeesList from '../employees-list/employees-list';
+import EmployeesAddForm from '../employees-add-form/employees-add-form';
+import './app.css';
+
+class App extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            data: [
+                { name: 'Maxim B.', salary: 800, increase: false, rise: true, id: 1 },
+                { name: 'Alex S.', salary: 3000, increase: false, rise: false, id: 2 },
+                { name: 'Gordon F.', salary: 5000, increase: true, rise: false, id: 3 },
+
+            ],
+            term: '',
+            filter: 'all',
+        };
+        this.maxId = 4;
+    }
+
+    deleteItem = (id) => {
+        this.setState(({ data }) => {
+            return {
+                data: data.filter(item => item.id !== id)
+            }
+        });
+    }
+
+    addItem = (name, salary) => {
+        const newItem = {
+            name,
+            salary,
+            increase: false,
+            rise: false,
+            id: this.maxId++
+        };
+        if (name.length > 3 || salary) {
+            this.setState(({ data }) => ({
+                data: [...data, newItem]
+            }));
+        }
+    }
+
+    onToggleProp = (id, prop) => {
+        this.setState(({ data }) => ({
+            data: data.map(item => {
+                if (item.id === id) {
+                    return { ...item, [prop]: !item[prop] }
+                }
+                return item;
+            })
+        }));
+    }
+
+    searchEmp = (items, term) => {
+        if (term.length === 0) {
+            return items
+        };
+
+        return items.filter(item => {
+            return item.name.toUpperCase().indexOf(term.toUpperCase()) > -1;
+        });
+    }
+
+    onUpdateSearch = (term) => {
+        this.setState({ term });
+    }
+
+    filterEmp = (items, filter) => {
+        switch (filter) {
+            case 'rise':
+                return items.filter(item => item.rise);
+            case 'salaryMore1000':
+                return items.filter(item => item.salary > 1000);
+            default:
+                return items;
+        }
+    }
+
+    onFilterSelect = (filter) => {
+        this.setState({ filter });
+    }
+
+    changeSalary = (newSalary, name) => {
+        this.setState(({ data }) => ({
+            data: data.map(item => {
+                if (item.name === name) {
+                    return { ...item, salary: newSalary }
+                }
+                return item
+            })
+        }))
+    }
+
+    addDollar = (e) => {
+        if (e.target.value.slice(-1) !== '$') {
+            e.target.value += '$'
+        }
+    }
+
+    render() {
+        const { data, term, filter } = this.state;
+        const employees = this.state.data.length;
+        const increased = this.state.data.filter(elem => elem.increase).length;
+        const visibleData = this.filterEmp(this.searchEmp(data, term), filter);
+        return (
+            <div className="app">
+                <AppInfo employees={employees}
+                    increased={increased} />
+
+                <div className="search-panel">
+                    <SearchPanel onUpdateSearch={this.onUpdateSearch} />
+                    <AppFilter filter={filter}
+                        onFilterSelect={this.onFilterSelect} />
+                </div>
+
+                <EmployeesList
+                    data={visibleData}
+                    onDelete={this.deleteItem}
+                    onToggleProp={this.onToggleProp}
+                    changeSalary={this.changeSalary}
+                    addDollar={this.addDollar} />
+                <EmployeesAddForm onAdd={this.addItem} />
+            </div>
+        )
+    }
+}
+
+export default App;
+
+Document from src/components/employees-add-form/employees-add-form.css:
+.app-add-form {
+    margin-top: 30px;
+    padding: 25px;
+    background-color: #3d5a80;
+    border-radius: 4px;
+    box-shadow: 15px 15px 30px rgba(0, 0, 0, .15);
+    color: #fff;
+}
+
+.add-form {
+    margin-top: 20px;
+}
+
+.add-form input {
+    width: 350px;
+    margin-right: 20px;
+}
+
+Document from src/components/employees-add-form/employees-add-form.js:
+import { Component } from 'react';
+import './employees-add-form.css';
+
+class EmployeesAddForm extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            name: '',
+            salary: ''
+        };
+    }
+
+    onValueChange = (e) => {
+        this.setState(state => ({
+            [e.target.name]: e.target.value
+        }));
+    }
+
+    onSubmit = (e) => {
+        e.preventDefault();
+        this.props.onAdd(this.state.name, this.state.salary);
+        this.setState({
+            name: '',
+            salary: ''
+        });
+    }
+
+    render() {
+        const { name, salary } = this.state;
+
+        return (
+            <div className="app-add-form">
+                <h3>Добавьте нового сотрудника</h3>
+                <form className="add-form d-flex"
+                    onSubmit={this.onSubmit}>
+                    <input type="text"
+                        className="form-control new-post-label"
+                        placeholder="Как его зовут?"
+                        name="name"
+                        value={name}
+                        onChange={this.onValueChange} />
+                    <input type="number"
+                        className="form-control new-post-label"
+                        placeholder="З/П в $?"
+                        name="salary"
+                        value={salary}
+                        onChange={this.onValueChange} />
+                    <button type="submit" className="btn btn-outline-light">Добавить</button>
+                </form>
+            </div>
+        )
+    }
+}
+
+export default EmployeesAddForm
+
+Document from src/components/employees-list-item/employees-list-item.css:
+.list-group-item {
+    padding: 15px 20px;
+    border-bottom: 1px solid #3d5a80;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.list-group-item span {
+    line-height: 35px;
+    font-size: 20px;
+    cursor: pointer;
+    min-width: 550px;
+}
+
+.list-group-item input {
+    line-height: 35px;
+    font-size: 20px;
+    text-align: center;
+    border: 0;
+}
+
+.list-group-item button {
+    width: 35px;
+    height: 35px;
+    margin: 3px;
+    font-size: 17px;
+    border: none;
+    cursor: pointer;
+}
+
+.list-group-item .btn-up {
+    color: #e09f3e;
+}
+
+.list-group-item .btn-trash {
+    color: #e5383b
+}
+
+.list-group-item .fa-star {
+    width: 35px;
+    height: 35px;
+    text-align: center;
+    line-height: 35px;
+    font-size: 16px;
+    color: #ffd700;
+    transition: 0.3s all;
+    transform: translate(30px);
+    opacity: 0;
+}
+
+.list-group-item.like .fa-star {
+    opacity: 1;
+    transform: translate(0px);
+}
+
+.list-group-item.increase .list-group-item-label,
+.list-group-item.increase .list-group-item-input {
+    color: #e09f3e;
+}
+
+.list-group-item.increase .btn-star {
+    color: #aeaeae;
+}
+
+Document from src/components/employees-list-item/employees-list-item.js:
+import './employees-list-item.css'
+
+const EmployeesListItem = (props) => {
+
+    const { name, salary, onDelete, onToggleProp, increase, rise, changeSalary, addDollar } = props;
+
+    let classNames = "list-group-item d-flex justify-content-between";
+    if (increase) {
+        classNames += ' increase';
+    } if (rise) {
+        classNames += ' like';
+    }
+
+
+    return (
+        <li className={classNames}>
+            <span className="list-group-item-label" onClick={() => onToggleProp('rise')}>{name}</span>
+            <input type="text"
+                className="list-group-item-input"
+                defaultValue={salary + '$'}
+                onChange={(e) => changeSalary(e.target.value, name)}
+                onBlur={(e) => addDollar(e)} />
+            <div className="d-flex justify-content-center align-items-center">
+                <button type="button" className="btn-up btn-sm" onClick={() => onToggleProp('increase')}>
+                    <i className="fas fa-up-long"></i>
+                </button>
+
+                <button type="button" className="btn-trash btn-sm" onClick={onDelete}>
+                    <i className="fas fa-trash"></i>
+                </button>
+                <i className="fas fa-star"></i>
+            </div>
+        </li>
+    )
+
+}
+
+export default EmployeesListItem
+
+Document from src/components/employees-list/employees-list.css:
+.app-list {
+    margin-top: 30px;
+    background-color: #3d5a80;
+    background-repeat: 4px;
+    box-shadow: 15px 15px 30px rgba(0, 0, 0, .15);
+    color: #fff;
+}
+
+Document from src/components/employees-list/employees-list.js:
+import EmployeesListItem from '../employees-list-item/employees-list-item';
+import './employees-list.css';
+
+const EmployeesList = ({ data, onDelete, onToggleProp, changeSalary, addDollar }) => {
+
+    const elements = data.map(item => {
+        const { id, ...itemProps } = item;
+        return (
+            <EmployeesListItem key={id} {...itemProps}
+                onDelete={() => onDelete(id)}
+                onToggleProp={(param) => onToggleProp(id, param)}
+                changeSalary={changeSalary}
+                addDollar={addDollar} />
+        )
+    })
+
+    return (
+        <ul className="app-list list-group">
+            {elements}
+        </ul>
+    )
+}
+
+export default EmployeesList;
+
+Document from src/components/search-panel/search-panel.css:
+.search-panel {
+    margin-top: 30px;
+    padding: 25px;
+    background-color: #3d5a80;
+    border-radius: 4px;
+    box-shadow: 15px 15px 30px rgba(0, 0, 0, .15);
+    color: #fff;
+}
+
+Document from src/components/search-panel/search-panel.js:
+import { Component } from 'react';
+import './search-panel.css';
+
+class SearchPanel extends Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+            term: ''
+        };
+    }
+
+    onUpdateSearch = (e) => {
+        const term = e.target.value;
+        this.setState({ term });
+        this.props.onUpdateSearch(term);
+    }
+
+    render() {
+        return (
+            <input
+                type="text"
+                className="form-control search-input"
+                placeholder="Найти сотрудника"
+                value={this.state.term}
+                onChange={this.onUpdateSearch}
+            />
+        )
+    }
+}
+
+export default SearchPanel;
+
