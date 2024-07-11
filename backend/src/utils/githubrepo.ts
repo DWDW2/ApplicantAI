@@ -150,7 +150,7 @@ const saveReportToFile = (report: string, filePath: string) => {
 	console.log(`Report saved to ${filePath}`);
 };
 
-export const reviewGithubRepos = async (url: string) => {
+export const reviewGithubRepos = async (url: string, limit: number = 10) => {
 	try {
 		const { username, repoName } = extractRepoInfoFromUrl(url);
 		const documents = await analyzeRepository(username, repoName);
@@ -167,13 +167,15 @@ export const reviewGithubRepos = async (url: string) => {
 		}
 
 		console.log(`Found ${repos.length} repositories with the name ${repoName}:`);
-		repos.forEach((repo) => {
+
+		const limitedRepos = repos.slice(0, limit);
+
+		limitedRepos.forEach((repo) => {
 			console.log(`- ${repo.full_name}: ${repo.html_url}`);
 		});
 
-		for (const repo of repos) {
+		for (const repo of limitedRepos) {
 			if (repo.owner.login !== username) {
-				// Exclude your own repositories
 				console.log(`\nComparing code for repository: ${repo.full_name}`);
 				await compareRepoCode(repo.full_name, targetCode);
 			}
