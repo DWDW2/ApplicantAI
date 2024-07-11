@@ -55,5 +55,11 @@ export default class GoogleSheetsController {
       res.status(500).json({message: err})
     }
   }
+
+
+  async changePrompt(req: Request, res: Response){
+    const result = await this.googleApiService.changeGlobalPrompt(req.body.dataArray ,req.body.prompt)
+    res.status(200).json({message: result})
+  }
 }
 

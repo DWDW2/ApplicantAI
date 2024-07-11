@@ -14,4 +14,8 @@ interface authGoogleSheet {
   client_x509_cert_url:string,
   universe_domain: string,
 }
-export  {SheetsType, authGoogleSheet}
+
+type ResultObject = {
+  [key: string]: string;
+};
+export  {SheetsType, authGoogleSheet, ResultObject}
