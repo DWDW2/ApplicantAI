@@ -23,7 +23,7 @@ export class GoogleApiService {
         return auth
     }
 
-    async getGoogleSheetsData(sheetId: string, sheetName: string) {
+    async getGoogleSheetsData(sheetId: string, sheetName: string, ratio: string) {
         const auth = await this.authGoogleSheets()
         const googleSheetId = sheetId;
         const googleSheetPage = sheetName;
@@ -47,7 +47,7 @@ export class GoogleApiService {
             const infoObjectFromSheet = await sheetInstance.spreadsheets.values.get({
                 auth: auth,
                 spreadsheetId: googleSheetId,
-                range: `${googleSheetPage}!A1:K10`
+                range: `${googleSheetPage}!${ratio}`
             });
             
             const valuesFromSheet = infoObjectFromSheet.data.values;
@@ -85,8 +85,8 @@ export class GoogleApiService {
         }
     }
 
-    async checkAiGoogleSheets (link: string, page: string) {
-        const data = await this.getGoogleSheetsData(link, page)
+    async checkAiGoogleSheets (link: string, page: string, ratio:string) {
+        const data = await this.getGoogleSheetsData(link, page, ratio)
         console.log(link, page)
         console.log("data", globalThis.__GLOBAL_VAR__.Prompt);
         const parts = globalThis.__GLOBAL_VAR__.Prompt

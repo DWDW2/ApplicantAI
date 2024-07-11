@@ -12,7 +12,8 @@ export default class GoogleSheetsController {
   async getSheetData(req:Request, res: Response){
     const link = await this.googleApiService.extractSpreadsheetId(req.body.link)
     const pageName = req.body.page
-    const sheetData = await this.googleApiService.getGoogleSheetsData(link, pageName);
+    const ratio = req.body.ratio
+    const sheetData = await this.googleApiService.getGoogleSheetsData(link, pageName, ratio);
     res.json(sheetData);
   }
 
@@ -47,7 +48,8 @@ export default class GoogleSheetsController {
     try{
       const link = await this.googleApiService.extractSpreadsheetId(req.body.link)
       const pageName = req.body.page
-      const result = await this.googleApiService.checkAiGoogleSheets(link, pageName)
+      const ratio = req.body.ratio
+      const result = await this.googleApiService.checkAiGoogleSheets(link, pageName, ratio)
       const json = result.response.text()
       const resultJson = JSON.parse(json)
       res.status(200).json(resultJson)
