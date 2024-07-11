@@ -5,7 +5,6 @@ import GoogleApiRoute from './routes/googleapi.route'
 import cors from 'cors';
 import { HttpCode, ONE_HUNDRED, ONE_THOUSAND, SIXTY } from './core/constants/index';
 import { logger } from './logger';
-import connectdb from './core/connectdb';
 interface ServerOptions {
  port: number;
 }

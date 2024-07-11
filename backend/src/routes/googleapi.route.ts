@@ -1,17 +1,21 @@
 import { Router } from 'express';
 import { GoogleApiService } from '../services/googleapi.service';
+import GoogleSheetsController from '../controllers/googleapi.controller';
+import { hasFilesMiddleware } from '../middleare/json.middleware';
+import multer from 'multer';
+
+const upload = multer();
 
 const router = Router();
 const googleApiService = new GoogleApiService();
+const googleSheetsController = new GoogleSheetsController(googleApiService);
 
-router.get('/get', async (req, res) => {
-  try {
-    const data = await googleApiService.getGoogleSheetsData();
-    res.json({data:data});
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to retrieve data from Google Sheets' });
-  }
-});
+router.get('/get', hasFilesMiddleware, (req, res) => googleSheetsController.getSheetData(req, res))
+
+router.post('/upload-json', upload.single('file'), (req, res) => googleSheetsController.uploadJson(req, res))
+
+router.post('/upload-json', upload.single('file'), (req, res) => googleSheetsController.uploadJson(req, res))
+
+router.get('/get-ai-check', hasFilesMiddleware, (req, res) => googleSheetsController.chechWithAiGoogleSheets(req, res))
 
 export default router;
