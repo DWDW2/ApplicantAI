@@ -62,7 +62,9 @@ const fetchRepoContents = async (repoFullName: string, path: string = ''): Promi
 	}
 };
 
-const compareRepoCode = async (repoFullName: string, targetCode: string, path: string = ''): Promise<void> => {
+const compareRepoCode = async (repoFullName: string, targetCode: string, path: string = ''): Promise<number[]> => {
+	let similarities: number[] = [];
+
 	try {
 		const repoFiles = await fetchRepoContents(repoFullName, path);
 
@@ -72,17 +74,20 @@ const compareRepoCode = async (repoFullName: string, targetCode: string, path: s
 				const fileContent = fileResponse.data;
 
 				const similarity = compareCodeSimilarity(fileContent, targetCode);
-				console.log(`File ${file.path} in ${repoFullName} similarity: ${similarity}%`);
+				similarities.push(similarity);
 			} else if (file.type === 'dir') {
-				await compareRepoCode(repoFullName, targetCode, file.path);
+				const dirSimilarities = await compareRepoCode(repoFullName, targetCode, file.path);
+				similarities = similarities.concat(dirSimilarities);
 			}
 		}
 	} catch (error: any) {
 		console.error(`Error comparing code for ${repoFullName}:`, error.message);
 	}
+
+	return similarities;
 };
 
-const compareCodeSimilarity = (code1: string, code2: string): string => {
+const compareCodeSimilarity = (code1: string, code2: string): number => {
 	const minLength = Math.min(code1.length, code2.length);
 	let commonChars = 0;
 
@@ -93,7 +98,7 @@ const compareCodeSimilarity = (code1: string, code2: string): string => {
 	}
 
 	const similarityPercentage = (commonChars / minLength) * 100;
-	return similarityPercentage.toFixed(2);
+	return similarityPercentage;
 };
 
 const extractRepoInfoFromUrl = (url: string) => {
@@ -163,7 +168,7 @@ export const reviewGithubRepos = async (url: string, limit: number = 10) => {
 
 		if (repos.length === 0) {
 			console.log('No repositories found with the name:', repoName);
-			return;
+			return [];
 		}
 
 		console.log(`Found ${repos.length} repositories with the name ${repoName}:`);
@@ -174,13 +179,28 @@ export const reviewGithubRepos = async (url: string, limit: number = 10) => {
 			console.log(`- ${repo.full_name}: ${repo.html_url}`);
 		});
 
+		const result = [];
+
 		for (const repo of limitedRepos) {
 			if (repo.owner.login !== username) {
 				console.log(`\nComparing code for repository: ${repo.full_name}`);
-				await compareRepoCode(repo.full_name, targetCode);
+				const similarities = await compareRepoCode(repo.full_name, targetCode);
+
+				const totalSimilarity = similarities.length
+					? (similarities.reduce((a, b) => a + b, 0) / similarities.length).toFixed(2)
+					: '0.00';
+
+				result.push({
+					repoName: repo.full_name,
+					repoLink: repo.html_url,
+					repoSimilarity: `${totalSimilarity}%`
+				});
 			}
 		}
+
+		return result;
 	} catch (error: any) {
 		console.error('Error:', error.message);
+		throw error;
 	}
 };
