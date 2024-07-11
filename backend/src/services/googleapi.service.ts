@@ -101,7 +101,6 @@ export class GoogleApiService {
             generationConfig: generationConfig,
           });
           return result;
-          
     }
     async  extractSpreadsheetId(url: string): Promise<string> {
       const match = url.match(/spreadsheets\/d\/([^\/]+)/);
