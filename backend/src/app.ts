@@ -1,13 +1,13 @@
 import { getPackedSettings } from 'http2';
 import { envs } from './core/config/env';
 import { Server } from './server';
-import { mainFunc } from './utils/githubrepo';
+import { reviewGithubRepos } from './utils/githubrepo';
 
 (() => {
 	main();
 })();
 
-mainFunc();
+reviewGithubRepos('https://github.com/Okarix/react-employee-directory');
 
 function main(): void {
 	const server = new Server({

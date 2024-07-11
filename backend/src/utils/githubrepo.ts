@@ -1,4 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
+import { GithubRepoLoader } from 'langchain/document_loaders/web/github';
+import fs from 'fs';
+import path from 'path';
 
 const GITHUB_API_BASE_URL = 'https://api.github.com';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -93,64 +96,68 @@ const compareCodeSimilarity = (code1: string, code2: string): string => {
 	return similarityPercentage.toFixed(2);
 };
 
-export const mainFunc = async () => {
+const extractRepoInfoFromUrl = (url: string) => {
+	const match = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+	if (match) {
+		return {
+			username: match[1],
+			repoName: match[2]
+		};
+	}
+	throw new Error('Invalid GitHub URL');
+};
+
+const analyzeRepository = async (username: string, repoName: string) => {
+	const loader = new GithubRepoLoader(`https://github.com/${username}/${repoName}`, {
+		accessToken: GITHUB_TOKEN,
+		branch: 'main',
+		recursive: true,
+		unknown: 'warn',
+		ignorePaths: [
+			'.*',
+			'*.md',
+			'node_modules/**',
+			'package-lock.json',
+			'yarn.lock',
+			'jest.config.ts',
+			'eslint.config.mjs',
+			'package.json',
+			'tsconfig.json',
+			'data.json'
+		]
+	});
+
+	const documents = await loader.load();
+	return documents;
+};
+
+const generateReport = (documents: any) => {
+	let report = 'Report Summary:\n\n';
+
+	documents.forEach((doc: any) => {
+		report += `Document from ${doc.metadata.source}:\n${doc.pageContent}\n\n`;
+	});
+
+	return report;
+};
+
+const saveReportToFile = (report: string, filePath: string) => {
+	const directory = path.dirname(filePath);
+	if (!fs.existsSync(directory)) {
+		fs.mkdirSync(directory, { recursive: true });
+	}
+	fs.writeFileSync(filePath, report, 'utf8');
+	console.log(`Report saved to ${filePath}`);
+};
+
+export const reviewGithubRepos = async (url: string) => {
 	try {
-		const repoName = 'Employees-react-app'; // Replace with the repo name you want to search
-		const targetCode = `import { Component } from 'react';
-import './employees-add-form.css';
-
-class EmployeesAddForm extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            name: '',
-            salary: ''
-        };
-    }
-
-    onValueChange = (e) => {
-        this.setState(state => ({
-            [e.target.name]: e.target.value
-        }));
-    }
-
-    onSubmit = (e) => {
-        e.preventDefault();
-        this.props.onAdd(this.state.name, this.state.salary);
-        this.setState({
-            name: '',
-            salary: ''
-        });
-    }
-
-    render() {
-        const { name, salary } = this.state;
-
-        return (
-            <div className="app-add-form">
-                <h3>Добавьте нового сотрудника</h3>
-                <form className="add-form d-flex"
-                    onSubmit={this.onSubmit}>
-                    <input type="text"
-                        className="form-control new-post-label"
-                        placeholder="Как его зовут?"
-                        name="name"
-                        value={name}
-                        onChange={this.onValueChange} />
-                    <input type="number"
-                        className="form-control new-post-label"
-                        placeholder="З/П в $?"
-                        name="salary"
-                        value={salary}
-                        onChange={this.onValueChange} />
-                    <button type="submit" className="btn btn-outline-light">Добавить</button>
-                </form>
-            </div>
-        )
-    }
-}
-
-export default EmployeesAddForm`; // Replace with your target code for comparison
+		const { username, repoName } = extractRepoInfoFromUrl(url);
+		const documents = await analyzeRepository(username, repoName);
+		const report = generateReport(documents);
+		const filePath = `./reports/${username}_report.txt`;
+		saveReportToFile(report, filePath);
+		const targetCode = fs.readFileSync(filePath, 'utf8');
 
 		const repos = await searchRepositories(repoName);
 
@@ -165,7 +172,7 @@ export default EmployeesAddForm`; // Replace with your target code for compariso
 		});
 
 		for (const repo of repos) {
-			if (repo.owner.login !== 'DWDW2') {
+			if (repo.owner.login !== username) {
 				// Exclude your own repositories
 				console.log(`\nComparing code for repository: ${repo.full_name}`);
 				await compareRepoCode(repo.full_name, targetCode);
@@ -175,5 +182,3 @@ export default EmployeesAddForm`; // Replace with your target code for compariso
 		console.error('Error:', error.message);
 	}
 };
-
-// main();
