@@ -16,5 +16,6 @@ router.post('/upload-json', upload.single('file'), (req, res) => googleSheetsCon
 
 router.get('/get-ai-check', hasFilesMiddleware, (req, res) => googleSheetsController.chechWithAiGoogleSheets(req, res))
 
+router.get('/mentor-prompt', hasFilesMiddleware, (req, res) => googleSheetsController.implementMentorPrompt(req, res))
 
 export default router;
