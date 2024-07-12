@@ -114,6 +114,21 @@ export class GoogleApiService {
           await this.appendDataToGoogleSheet(JSON.parse(result.response.text()), link, page, ratioToInsert)
           return result;
     }
+    async deleteDataFromGoogleSheet(sheetId: string, sheetName: string, range: string) {
+      const auth = await this.authGoogleSheets();
+      const sheetInstance = google.sheets({ version: 'v4', auth: auth });
+
+      try {
+          const response = await sheetInstance.spreadsheets.values.clear({
+              spreadsheetId: sheetId,
+              range: `${sheetName}!${range}`,
+          });
+
+          console.log('Data deleted from Google Sheet:', response);
+      } catch (err) {
+          console.log('deleteDataFromGoogleSheet func() error', err);
+      }
+  }
 
     async useMentorPrompts (link: string, page: string, ratio:string, ratioToInsert: string, mentorPrompt: string) {
       const data = await this.getGoogleSheetsData(link, page, ratio)
@@ -124,7 +139,7 @@ export class GoogleApiService {
             contents: [{ role: "user", parts }],
             generationConfig: generationConfig,
           });
-
+          await this.deleteDataFromGoogleSheet(link, page, ratioToInsert)
           await this.appendDataToGoogleSheet(JSON.parse(result.response.text()), link, page, ratioToInsert)
           return result;
       }
