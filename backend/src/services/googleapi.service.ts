@@ -4,6 +4,7 @@ import { model, generationConfig, safetySetting } from "../core/config/gemini";
 import path from "path";
 import { readFileSync } from "fs";
 import Prompt from "../types/Global";
+import Applicant from "../types/Applicant";
 export class GoogleApiService {
     async authGoogleSheets () {
         const filePath = path.join(__dirname, '..', 'uploads', 'nfac-hackaton-59bae062e270.json');
@@ -42,7 +43,7 @@ export class GoogleApiService {
               });
             };
    
-            const sheetInstance = await google.sheets({ version: 'v4', auth: auth});
+            const sheetInstance = google.sheets({ version: 'v4', auth: auth });
 
             const infoObjectFromSheet = await sheetInstance.spreadsheets.values.get({
                 auth: auth,
@@ -70,28 +71,37 @@ export class GoogleApiService {
         }
     }
 
-    // async appendDataToGoogleSheet(data: any[], sheetId: string, sheetName: string, ratio: string) {
-    //     const auth = await this.authGoogleSheets();
-    //     const sheetInstance = await google.sheets({ version: 'v4', auth: auth });
+    async appendDataToGoogleSheet(data: Applicant[], sheetId: string, sheetName: string, ratio: string) {
+        const auth = await this.authGoogleSheets();
+        const sheetInstance = google.sheets({ version: 'v4', auth: auth });
+        const assessment =  data.map(applicant => {
+          return [
+            applicant.assessment.github_profile.evaluation,
+            applicant.assessment.programming_experience.evaluation,
+            applicant.assessment.overall_assessment.approved,
+            applicant.assessment.overall_assessment.explanation,
+            applicant.assessment.overall_assessment.experience_level
+          ];
+        })
+        console.log(assessment)
+        try {
+          const response = sheetInstance.spreadsheets.values.append({
+            auth: auth,
+            spreadsheetId: sheetId,
+            range: `${sheetName}!${ratio}`,
+            valueInputOption: 'RAW',
+            requestBody: {
+              values: assessment,
+            },
+          });
     
-    //     try {
-    //       // Extract the column letter from the ratio
-    //       const columnLetter = ratio.match(/([A-Z]+)\d+/)[1];
-    //       const appendRange = `${sheetName}!${columnLetter}:${columnLetter}`; // Append to the extracted column
+          console.log('Data appended to Google Sheet:', response);
+        } catch (err) {
+          console.log('appendDataToGoogleSheet func() error', err);
+        }
+    }
 
-    //       await sheetInstance.spreadsheets.values.append({
-    //         auth: auth,
-    //         spreadsheetId: sheetId,
-    //         range: appendRange,
-    //         valueInputOption: 'RAW',
-    //         values: [[aiResponses]], // Add the AI responses as a new row
-    //       });
-    //     } catch (err) {
-    //       console.log('appendDataToGoogleSheet func() error', err);
-    //     }
-    // }
-
-    async checkAiGoogleSheets (link: string, page: string, ratio:string) {
+    async checkAiGoogleSheets (link: string, page: string, ratio:string, ratioToInsert: string) {
         const data = await this.getGoogleSheetsData(link, page, ratio)
         console.log(link, page)
         console.log("data", globalThis.__GLOBAL_VAR__.Prompt);
@@ -100,7 +110,39 @@ export class GoogleApiService {
             contents: [{ role: "user", parts }],
             generationConfig: generationConfig,
           });
+
+          await this.appendDataToGoogleSheet(JSON.parse(result.response.text()), link, page, ratioToInsert)
           return result;
+    }
+    async deleteDataFromGoogleSheet(sheetId: string, sheetName: string, range: string) {
+      const auth = await this.authGoogleSheets();
+      const sheetInstance = google.sheets({ version: 'v4', auth: auth });
+
+      try {
+          const response = await sheetInstance.spreadsheets.values.clear({
+              spreadsheetId: sheetId,
+              range: `${sheetName}!${range}`,
+          });
+
+          console.log('Data deleted from Google Sheet:', response);
+      } catch (err) {
+          console.log('deleteDataFromGoogleSheet func() error', err);
+      }
+  }
+
+    async useMentorPrompts (link: string, page: string, ratio:string, ratioToInsert: string, mentorPrompt: string) {
+      const data = await this.getGoogleSheetsData(link, page, ratio)
+      if(data){
+        globalThis.__GLOBAL_VAR__.handleDataArray(data, mentorPrompt)
+        const parts = globalThis.__GLOBAL_VAR__.Prompt
+          const result = await model.generateContent({
+            contents: [{ role: "user", parts }],
+            generationConfig: generationConfig,
+          });
+          await this.deleteDataFromGoogleSheet(link, page, ratioToInsert)
+          await this.appendDataToGoogleSheet(JSON.parse(result.response.text()), link, page, ratioToInsert)
+          return result;
+      }
     }
     async  extractSpreadsheetId(url: string): Promise<string> {
       const match = url.match(/spreadsheets\/d\/([^\/]+)/);
