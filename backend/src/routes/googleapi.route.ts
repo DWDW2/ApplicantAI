@@ -14,8 +14,8 @@ router.get('/get', hasFilesMiddleware, (req, res) => googleSheetsController.getS
 
 router.post('/upload-json', upload.single('file'), (req, res) => googleSheetsController.uploadJson(req, res))
 
-router.get('/get-ai-check', hasFilesMiddleware, (req, res) => googleSheetsController.chechWithAiGoogleSheets(req, res))
+router.post('/get-ai-check', hasFilesMiddleware, (req, res) => googleSheetsController.chechWithAiGoogleSheets(req, res))
 
-router.get('/mentor-prompt', hasFilesMiddleware, (req, res) => googleSheetsController.implementMentorPrompt(req, res))
+router.post('/mentor-prompt', hasFilesMiddleware, (req, res) => googleSheetsController.implementMentorPrompt(req, res))
 
 export default router;
