@@ -6,11 +6,11 @@
 
 1. Склонируйте репозиторий фронтенда:
 
-git clone 
+git clone https://github.com/Okarix/ApplicantAi-Front.git
 
 2. Склонируйте репозиторий бэкенда:
 
-git clone 
+git clone https://github.com/DWDW2/ApplicantAI.git
 
 3. Установка зависимостей:
 
@@ -18,8 +18,8 @@ cd frontend
 npm install
 
 cd backend
-npm install
+yarn install
 
 4. Запуск сервера
-backend: npm run dev or yarn dev
+backend: yarn dev
 frontend: npm run dev
